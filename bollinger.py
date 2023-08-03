@@ -135,8 +135,8 @@ class BollingerBandsBacktest:
 if __name__ == "__main__":
     # Replace these with your desired stock ticker and date range
     ticker = 'META'
-    start_date = '2020-01-01'
-    end_date = '2023-07-30'
+    start_date = '2023-06-03'
+    end_date = '2023-08-03'
     window = 20  # Bollinger Bands window
     num_std = 2  # Number of standard deviations for Bollinger Bands
 
