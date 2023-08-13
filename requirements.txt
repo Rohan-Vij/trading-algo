@@ -1,0 +1,7 @@
+beautifulsoup4==4.12.2
+matplotlib==3.6.2
+nltk==3.6.5
+numpy==1.23.4
+pandas==1.5.2
+pandas_datareader==0.10.0
+yfinance==0.2.26

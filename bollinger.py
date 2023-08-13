@@ -59,14 +59,15 @@ class BollingerBandsBacktest:
                 if affordable_stocks > 0:
                     num_stocks += affordable_stocks
                     cash_balance -= affordable_stocks * row['Adj Close']
-                    print(f"Bought {affordable_stocks} stocks at {row['Adj Close']}. Total cash remaining: {cash_balance} with {num_stocks} stocks.")
+                    # print(f"Bought {affordable_stocks} stocks at {row['Adj Close']}. Total cash remaining: {cash_balance} with {num_stocks} stocks.")
                 else:
-                    print(f"Not enough cash to buy stocks at {row['Adj Close']}. Total cash: {cash_balance}")
+                    pass
+                    # print(f"Not enough cash to buy stocks at {row['Adj Close']}. Total cash: {cash_balance}")
 
             elif row['Position'] == -1 and num_stocks > 0:  # Sell signal and we have stocks to sell
                 cash_balance += num_stocks * row['Adj Close']
                 num_stocks = 0
-                print(f"Sold all stocks at {row['Adj Close']}. Total cash: {cash_balance}")
+                # print(f"Sold all stocks at {row['Adj Close']}. Total cash: {cash_balance}")
 
             print(f"Current portfolio value: {cash_balance + num_stocks * row['Adj Close']}")
             portfolio_value.append(cash_balance + num_stocks * row['Adj Close'])

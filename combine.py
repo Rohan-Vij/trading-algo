@@ -1,6 +1,9 @@
 from bollinger import BollingerBandsBacktest
 from nlp import StockSentimentAnalyzer
 import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
+
+import pandas as pd
 
 
 class TradeEvaluator(BollingerBandsBacktest, StockSentimentAnalyzer):
@@ -83,21 +86,76 @@ class TradeEvaluator(BollingerBandsBacktest, StockSentimentAnalyzer):
                     c=self.overall_sentiment['compound'], cmap='RdYlGn', alpha=1)  # Set vmin and vmax for color scale  
         plt.axhline(y=0, color='gray', linestyle='--', linewidth=1)  # Horizontal line at sentiment score 0
         plt.colorbar(label='Sentiment Intensity')
+
         # plt.ylim(-0.5, 0.5)
         plt.ylabel("Sentiment", color='black')
         plt.tick_params(axis='y', labelcolor='black')
         plt.xlabel("Date")
 
+                # Get buy/sell signals for the available dates and overlay them on the graph at y=0
+        signals = self.trading_strategy()
+        # print(signals.tail(10))
+        available_dates = self.overall_sentiment['date'].values
+        buy_signals = signals[signals.index.isin(available_dates) & (signals['Signal'] == 1)]
+        sell_signals = signals[signals.index.isin(available_dates) & (signals['Signal'] == -1)]
+
+        plt.scatter(buy_signals.index, [0] * len(buy_signals), marker='^', color='g', label='Buy Signal', s=100)
+        plt.scatter(sell_signals.index, [0] * len(sell_signals), marker='v', color='r', label='Sell Signal', s=100)
+
+        plt.legend(loc='upper right')
+
         plt.tight_layout()
         plt.show()
+
+        return plt
+
+    def analyze_specific_date(self, current_date = datetime.now()):
+        self.get_stock_data()
+        self.calculate_bollinger_bands()
+
+        signals = self.trading_strategy()
+        self.evaluate_strategy(signals)
+
+        current_date = current_date.strftime('%Y-%m-%d')
+        
+        stock_date = None
+        while stock_date is None:
+            try:
+                stock_date = self.stock_data.loc[current_date]['Adj Close']
+            except KeyError:
+                current_date = (datetime.strptime(current_date, '%Y-%m-%d') - timedelta(days=1)).strftime('%Y-%m-%d')
+
+        row = self.stock_data.loc[current_date]
+
+        result = {
+            "Date": current_date,
+            "Bollinger Bands Signal": row['Position'],
+            "Stock Price": f"${row['Adj Close']:.2f}",
+            "Expected EMA Price": f"${row['EMA']:.2f}"
+        }
+
+        news_articles = self.get_news_articles(current_date)
+        result["News Articles"] = news_articles
+
+        return result
+
+
+    def get_news_articles(self, date):
+        self.news_df['date'] = pd.to_datetime(self.news_df['date'], format='%Y-%m-%d')
+        news_articles = self.news_df[self.news_df['date'] == date]
+        if not news_articles.empty:
+            return news_articles.to_dict('records')
+        return None
 
 if __name__ == '__main__':
     ticker = 'META'
     start_date = '2020-01-01'
-    end_date = '2023-08-03'
+    end_date = datetime.now().strftime('%Y-%m-%d')
     window = 20
     num_std = 2
 
     trade_evaluator = TradeEvaluator(ticker, start_date, end_date, window, num_std)
-    trade_evaluator.backtest()
-    trade_evaluator.plot_graph()
+    trade_evaluator.analyze_current_date()
+    
+    # trade_evaluator.backtest()
+    # trade_evaluator.plot_graph()
